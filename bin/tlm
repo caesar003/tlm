@@ -4,7 +4,7 @@ config_dir="$HOME/.config/tlm"
 config_file="$config_dir/setting.conf"
 layout_dir="$config_dir/layouts"
 default_layout=""
-version="1.0.0"
+version="1.0.1"
 
 print_version() {
 	echo "Tmux Layout Manager version $version"
