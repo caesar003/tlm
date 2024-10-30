@@ -1,7 +1,7 @@
 #!/bin/bash
 
 config_dir="$HOME/.config/tlm"
-config_file="$config_dir/settings.conf"
+config_file="$config_dir/setting.conf"
 layout_dir="$config_dir/layouts"
 default_layout=""
 version="1.0.0"
