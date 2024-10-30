@@ -1,0 +1,162 @@
+#!/bin/bash
+
+config_dir="$HOME/.config/tlm"
+config_file="$config_dir/settings.conf"
+layout_dir="$config_dir/layouts"
+default_layout=""
+version="1.0.0"
+
+print_version() {
+	echo "Tmux Layout Manager version $version"
+}
+
+show_help() {
+	echo "Usage: $0 [OPTIONS]"
+	echo ""
+	echo "Options:"
+	echo "  -i, --init [layout_name]    Load the specified Tmux layout."
+	echo "  -l, --list                  List available layouts."
+	echo "  -v, --version               Show the version number."
+	echo "  -h, --help                  Display this help message."
+	echo ""
+	echo "Examples:"
+	echo "  $0 -i node                  Load the layout defined in 'node.json'."
+	echo "  $0 -l                       List all available layouts."
+	echo "  $0 -v                       Show the version number."
+	echo ""
+	echo "For configuration details, ensure your config file is located at:"
+	echo "  $config_file"
+}
+
+load_layout() {
+	layout_name="$1"
+	layout_file="$layout_dir/$layout_name.json"
+
+	if [[ ! -f "$layout_file" ]]; then
+		echo "Error: Layout file '$layout_file' does not exist."
+		exit 1
+	fi
+
+	if ! validate_layout_file "$layout_file"; then
+		echo "Error: Layout file '$layout_file' is invalid."
+		exit 1
+	fi
+
+	# Launch Tmux session based on layout
+	load_file "$layout_file"
+}
+
+# Function to validate JSON layout file (basic check for now)
+validate_layout_file() {
+	layout_file="$1"
+	if jq empty "$layout_file" 2>/dev/null; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+# Function to load and parse layout file with session defaults and window management
+load_file() {
+	layout_file="$1"
+
+	# Set default session name if none is provided
+	session_name="session_$(date +%s)"
+
+	# Create the tmux session and set the first window title
+	first_window_title=$(jq -r '.[0].title' "$layout_file")
+	tmux new-session -d -s "$session_name" -n "$first_window_title"
+
+	# Loop through remaining windows in the layout JSON
+	num_windows=$(jq '. | length' "$layout_file")
+	for ((i = 1; i < num_windows; i++)); do
+		window_title=$(jq -r ".[$i].title" "$layout_file")
+		tmux new-window -t "$session_name" -n "$window_title"
+
+		# Handle window splits if specified in the JSON
+		window_split=$(jq -r ".[$i].window_split // empty" "$layout_file")
+		if [ -n "$window_split" ]; then
+			for ((j = 1; j < window_split; j++)); do
+				tmux split-window -h -t "$session_name:$i"
+				tmux select-layout -t "$session_name:$i" tiled
+			done
+		fi
+	done
+
+	# Attach to the tmux session
+	tmux attach -t "$session_name"
+}
+
+# Function to list available layouts
+list_layouts() {
+	if compgen -G "$layout_dir/*.json" >/dev/null; then
+		echo "Available layouts:"
+		for layout_file in "$layout_dir"/*.json; do
+			layout_name=$(basename "$layout_file" .json)
+			echo "  - $layout_name"
+		done
+	else
+		echo "No layouts found in $layout_dir."
+	fi
+}
+
+# Main logic to load layout using config if none specified
+load() {
+	layout_name="$1"
+	if [[ -n "$layout_name" ]]; then
+		load_layout "$layout_name"
+	else
+		if [[ ! -f "$config_file" ]]; then
+			echo "Error: Config file '$config_file' does not exist."
+			exit 1
+		fi
+
+		# Read default layout from config
+		default_layout=$(grep -E "^DEFAULT_LAYOUT=" "$config_file" | cut -d '=' -f2)
+		if [[ -z "$default_layout" ]]; then
+			echo "Error: DEFAULT_LAYOUT not defined in config file."
+			exit 1
+		fi
+
+		load_layout "$default_layout"
+	fi
+}
+
+# Parse command-line options
+if [[ "$#" -eq 0 ]]; then
+	show_help
+	exit 0
+fi
+
+layout_name=""
+while [[ "$#" -gt 0 ]]; do
+	case "$1" in
+	-i | --init)
+		layout_name="$2"
+		shift
+		if [[ "$layout_name" == -* ]]; then
+			layout_name=""
+		fi
+		shift
+		load "$layout_name"
+		exit 0
+		;;
+	-l | --list)
+		list_layouts
+		exit 0
+		;;
+	-v | --version)
+		print_version
+		exit 0
+		;;
+	-h | --help)
+		show_help
+		exit 0
+		;;
+	*)
+		echo "Unknown option: $1"
+		show_help
+		exit 1
+		;;
+	esac
+done

@@ -1,0 +1,45 @@
+.\" Manpage for tlm
+.TH TLM 1 "October 2024" "1.0.0" "Tmux Layout Manager Manual"
+.SH NAME
+tlm \- Tmux Layout Manager
+.SH SYNOPSIS
+.B tlm
+.RI [OPTIONS]
+.SH DESCRIPTION
+The Tmux Layout Manager (tlm) is a command-line tool for managing Tmux layouts. It allows users to load predefined layouts and list available options.
+
+.SH OPTIONS
+.TP
+.B \-i, --init [layout_name]
+Load the specified Tmux layout. If layout_name is provided, it will load the corresponding layout file (e.g., 'node.json').
+.TP
+.B \-l, --list
+List available layouts.
+.TP
+.B \-v, --version
+Show the version number.
+.TP
+.B \-h, --help
+Display this help message.
+
+.SH EXAMPLES
+.TP
+.B ./tlm -i node
+Load the layout defined in 'node.json'.
+.TP
+.B ./tlm -l
+List all available layouts.
+.TP
+.B ./tlm -v
+Show the version number.
+
+.SH CONFIGURATION
+For configuration details, ensure your config file is located at:
+.B /home/caesar/.config/tlm/settings.conf
+
+.SH AUTHOR
+Written by caesar003 - https://github.com/caesar003.
+
+.SH LICENSE
+This software is licensed under the [License Name].
+

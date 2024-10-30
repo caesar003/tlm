@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Completion script for Tmux Layout Manager (tlm)
+
+# _tlm_completion function to generate completions
+_tlm_completion() {
+	local cur prev commands
+	COMPREPLY=()                                                          # Array to hold the completion results
+	cur="${COMP_WORDS[COMP_CWORD]}"                                       # Current word being completed
+	prev="${COMP_WORDS[COMP_CWORD - 1]}"                                  # Previous word
+	commands=("-i" "--init" "-l" "--list" "-v" "--version" "-h" "--help") # Available commands
+
+	# Handle the case for the first word (tlm)
+	if [[ ${COMP_CWORD} -eq 1 ]]; then
+		COMPREPLY=($(compgen -W "${commands[*]}" -- "$cur"))
+		return 0
+	fi
+
+	# Handle -i or --init option for layout names
+	if [[ "$prev" == "-i" || "$prev" == "--init" ]]; then
+		local layouts
+		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json | xargs -n 1 basename | sed 's/\.json$//') # List layout names
+		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
+		return 0
+	fi
+}
+
+# Register the completion function
+complete -F _tlm_completion tlm
