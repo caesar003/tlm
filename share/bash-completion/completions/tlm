@@ -4,7 +4,7 @@
 
 # _tlm_completion function to generate completions
 _tlm_completion() {
-	local cur prev commands
+	local cur prev commands layout_word
 	COMPREPLY=()                                                          # Array to hold the completion results
 	cur="${COMP_WORDS[COMP_CWORD]}"                                       # Current word being completed
 	prev="${COMP_WORDS[COMP_CWORD - 1]}"                                  # Previous word
@@ -19,10 +19,37 @@ _tlm_completion() {
 	# Handle -i or --init option for layout names
 	if [[ "$prev" == "-i" || "$prev" == "--init" ]]; then
 		local layouts
-		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json | xargs -n 1 basename | sed 's/\.json$//') # List layout names
+		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json 2>/dev/null | xargs -n 1 basename | sed 's/\.json$//')
 		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
 		return 0
 	fi
+
+	# Handle session name completion after layout name
+	# Check if we're at position 3 and the word at position 1 is -i or --init
+	if [[ ${COMP_CWORD} -eq 3 ]]; then
+		if [[ "${COMP_WORDS[1]}" == "-i" || "${COMP_WORDS[1]}" == "--init" ]]; then
+			# Provide some common session name suggestions based on current directory
+			local dir_name current_dir suggestions
+			current_dir=$(basename "$PWD")
+			# Clean directory name for session name suggestion
+			dir_name=$(echo "$current_dir" | sed 's/[^a-zA-Z0-9_-]/_/g')
+			
+			# Create suggestions array
+			suggestions=("$dir_name" "dev" "main" "work" "test" "debug")
+			
+			# If user hasn't started typing, show all suggestions
+			# If they have, filter based on what they've typed
+			if [[ -z "$cur" ]]; then
+				COMPREPLY=("${suggestions[@]}")
+			else
+				COMPREPLY=($(compgen -W "${suggestions[*]}" -- "$cur"))
+			fi
+			return 0
+		fi
+	fi
+
+	# No completion available for other cases
+	return 0
 }
 
 # Register the completion function

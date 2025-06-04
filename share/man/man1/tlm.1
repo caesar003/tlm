@@ -1,17 +1,17 @@
 .\" Manpage for tlm
-.TH TLM 1 "October 2024" "1.0.3" "Tmux Layout Manager Manual"
+.TH TLM 1 "June 2025" "1.0.4" "Tmux Layout Manager Manual"
 .SH NAME
 tlm \- Tmux Layout Manager
 .SH SYNOPSIS
 .B tlm
 .RI [OPTIONS]
 .SH DESCRIPTION
-The Tmux Layout Manager (tlm) is a command-line tool for managing Tmux layouts. It allows users to load predefined layouts and list available options.
+The Tmux Layout Manager (tlm) is a command-line tool for managing Tmux layouts. It allows users to load predefined layouts with flexible session naming and list available options.
 
 .SH OPTIONS
 .TP
-.B \-i, --init [layout_name]
-Load the specified Tmux layout. If layout_name is provided, it will load the corresponding layout file (e.g., 'node.json').
+.B \-i, --init [layout_name] [session_name]
+Load the specified Tmux layout with optional custom session name. If layout_name is provided, it will load the corresponding layout file (e.g., 'node.json'). If session_name is provided, it will be used as the base name for the tmux session.
 .TP
 .B \-l, --list
 List available layouts.
@@ -22,10 +22,25 @@ Show the version number.
 .B \-h, --help
 Display this help message.
 
+.SH SESSION NAMING
+Session names are automatically generated with the following logic:
+.TP
+.B Custom session name provided
+If a session name is specified, the format will be: \fBcustom_name_timestamp\fR
+.TP
+.B No session name provided
+If no session name is specified, the current directory name will be used as the base name in the format: \fBdirectory_name_timestamp\fR
+.TP
+.B Example
+For a directory named \fI/home/caesar/projects/wms/OrderService-Frontend\fR, the session name would be \fBOrderService-Frontend_1234567890\fR
+
 .SH EXAMPLES
 .TP
 .B ./tlm -i node
-Load the layout defined in 'node.json'.
+Load the layout defined in 'node.json' with auto-generated session name based on current directory.
+.TP
+.B ./tlm -i node myproject
+Load the layout defined in 'node.json' with session name 'myproject_timestamp'.
 .TP
 .B ./tlm -l
 List all available layouts.
@@ -35,11 +50,24 @@ Show the version number.
 
 .SH CONFIGURATION
 For configuration details, ensure your config file is located at:
-.B /home/caesar/.config/tlm/settings.conf
+.B $HOME/.config/tlm/setting.conf
+
+Layout files should be placed in:
+.B $HOME/.config/tlm/layouts/
+
+.SH FILES
+.TP
+.B $HOME/.config/tlm/setting.conf
+Main configuration file containing DEFAULT_LAYOUT setting.
+.TP
+.B $HOME/.config/tlm/layouts/*.json
+Layout definition files in JSON format.
 
 .SH AUTHOR
 Written by caesar003 - https://github.com/caesar003.
 
 .SH LICENSE
-This software is licensed under the [License Name].
+This software is licensed under the MIT License.
 
+.SH SEE ALSO
+.BR tmux (1)
