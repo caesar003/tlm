@@ -5,9 +5,24 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Determine the correct library path based on installation type
+if [[ -f "$SCRIPT_DIR/lib/config.sh" ]]; then
+    # Development mode - libraries are in lib/ subdirectory
+    LIB_DIR="$SCRIPT_DIR/lib"
+elif [[ -f "/usr/lib/tlm/config.sh" ]]; then
+    # System installation - libraries are in /usr/lib/tlm/
+    LIB_DIR="/usr/lib/tlm"
+else
+    echo "Error: Cannot find tlm library files" >&2
+    echo "Looked in:" >&2
+    echo "  $SCRIPT_DIR/lib/" >&2
+    echo "  /usr/lib/tlm/" >&2
+    exit 1
+fi
+
 # Source required modules
-source "$SCRIPT_DIR/config.sh"
-source "$SCRIPT_DIR/core.sh"
+source "$LIB_DIR/config.sh"
+source "$LIB_DIR/core.sh"
 
 # Display version information
 print_version() {
