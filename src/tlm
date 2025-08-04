@@ -1,86 +1,133 @@
 #!/bin/bash
 
+# Entry point
+# file: /home/caesar/projects/dev-tools/prod/tlm/src/tlm
+
 # Tmux Layout Manager - Main Entry Point
-# Version: 1.0.4
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source required modules
-source "$SCRIPT_DIR/config.sh"
-source "$SCRIPT_DIR/core.sh"
+# Function to source modules with proper path resolution
+source_modules() {
+    local lib_dir
+    
+    # Check if running in development mode
+    if [[ -n "$TLM_DEV_MODE" ]]; then
+        lib_dir="$SCRIPT_DIR/lib"
+    else
+        # When installed via package, libraries are in /usr/lib/tlm/
+        lib_dir="/usr/lib/tlm"
+    fi
+    
+    # Source required modules
+    if [[ -f "$lib_dir/config.sh" ]]; then
+        source "$lib_dir/config.sh"
+    else
+        echo "Error: Cannot find config.sh in $lib_dir" >&2
+        exit 1
+    fi
+    
+    if [[ -f "$lib_dir/core.sh" ]]; then
+        source "$lib_dir/core.sh"
+    else
+        echo "Error: Cannot find core.sh in $lib_dir" >&2
+        exit 1
+    fi
+}
+
+# Source the modules
+source_modules
 
 # Display version information
 print_version() {
-	echo "Tmux Layout Manager version $TLM_VERSION"
+    echo "Tmux Layout Manager version $TLM_VERSION"
 }
 
 # Display help information
 show_help() {
-	echo "$HELP_USAGE"
-	echo ""
-	echo "$HELP_OPTIONS"
-	echo ""
-	echo "$HELP_EXAMPLES"
-	echo ""
-	echo "$HELP_SESSION_NAMING"
-	echo ""
-	echo "$HELP_CONFIG_INFO"
+    echo "$HELP_USAGE"
+    echo ""
+    echo "$HELP_OPTIONS"
+    echo ""
+    echo "$HELP_EXAMPLES"
+    echo ""
+    echo "$HELP_SESSION_NAMING"
+    echo ""
+    echo "$HELP_CONFIG_INFO"
 }
 
 # Parse command line arguments and execute appropriate action
 parse_arguments() {
-	if [[ "$#" -eq 0 ]]; then
-		show_help
-		exit $EXIT_SUCCESS
-	fi
+    if [[ "$#" -eq 0 ]]; then
+        show_help
+        exit $EXIT_SUCCESS
+    fi
 
-	while [[ "$#" -gt 0 ]]; do
-		case "$1" in
-		-i | --init)
-			local layout_name="$2"
-			local custom_session_name=""
-			
-			# Skip if next argument is a flag
-			if [[ "$layout_name" == -* ]]; then
-				layout_name=""
-			else
-				shift
-				# Check if next argument is a session name (not a flag)
-				if [[ -n "$1" && "$1" != -* ]]; then
-					custom_session_name="$1"
-					shift
-				fi
-			fi
-			
-			load "$layout_name" "$custom_session_name"
-			exit $?
-			;;
-		-l | --list)
-			list_layouts
-			exit $EXIT_SUCCESS
-			;;
-		-v | --version)
-			print_version
-			exit $EXIT_SUCCESS
-			;;
-		-h | --help)
-			show_help
-			exit $EXIT_SUCCESS
-			;;
-		*)
-			echo "Unknown option: $1" >&2
-			show_help >&2
-			exit $EXIT_ERROR
-			;;
-		esac
-		shift
-	done
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+        -i | --init)
+            local layout_name="$2"
+            local custom_session_name=""
+
+            # Skip if next argument is a flag
+            if [[ "$layout_name" == -* ]]; then
+                layout_name=""
+            else
+                shift
+                # Check if next argument is a session name (not a flag)
+                if [[ -n "$1" && "$1" != -* ]]; then
+                    custom_session_name="$1"
+                    shift
+                fi
+            fi
+
+            load "$layout_name" "$custom_session_name"
+            exit $?
+            ;;
+        -l | --list)
+            list_layouts
+            exit $EXIT_SUCCESS
+            ;;
+        -v | --version)
+            print_version
+            exit $EXIT_SUCCESS
+            ;;
+        -d | --detail)
+            local layout_name="$2"
+            # Skip if next argument is a flag or empty
+            if [[ "$layout_name" == -* || -z "$layout_name" ]]; then
+                layout_name=""
+            else
+                shift
+            fi
+            show_layout_details "$layout_name"
+            exit $?
+            ;;
+        -h | --help)
+            show_help
+            exit $EXIT_SUCCESS
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            show_help >&2
+            exit $EXIT_ERROR
+            ;;
+        esac
+        shift
+    done
 }
 
 # Main execution
 main() {
-	parse_arguments "$@"
+    # Debug information if enabled
+    if [[ -n "$TLM_DEBUG" ]]; then
+        echo "DEBUG: Script directory: $SCRIPT_DIR" >&2
+        echo "DEBUG: Development mode: ${TLM_DEV_MODE:-no}" >&2
+        echo "DEBUG: Version: $TLM_VERSION" >&2
+    fi
+    
+    parse_arguments "$@"
 }
 
 # Execute main function with all arguments

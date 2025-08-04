@@ -3,7 +3,7 @@
 
 # Package information
 PACKAGE_NAME = tlm
-VERSION = $(shell cat VERSION 2>/dev/null)
+VERSION = $(shell cat VERSION 2>/dev/null | tr -d '"' | tr -d "'" | xargs)
 ARCHITECTURE = all
 MAINTAINER = caesar003 <caesarmuksid@gmail.com>
 
@@ -21,45 +21,78 @@ MAN_DIR = $(USR_SHARE_DIR)/man/man1
 # Source files
 MAIN_SCRIPT = $(SRC_DIR)/$(PACKAGE_NAME)
 LIB_SCRIPTS = $(wildcard $(LIB_DIR)/*.sh)
-MAN_PAGE = $(SRC_DIR)/man/$(PACKAGE_NAME).1
+MAN_PAGE = share/man/man1/$(PACKAGE_NAME).1
 
 # Build targets
-.PHONY: all dev build install clean help test
+.PHONY: all dev build install clean help test version-check
 
-all: build
+all: version-check build
 
 help:
 	@echo "Available targets:"
-	@echo "  dev     - Set up development environment"
-	@echo "  build   - Build debian package"
-	@echo "  install - Install from debian package"
-	@echo "  clean   - Remove build artifacts"
-	@echo "  test    - Run basic tests"
-	@echo "  help    - Show this help message"
+	@echo "  dev          - Set up development environment"
+	@echo "  build        - Build debian package"
+	@echo "  install      - Install from debian package"
+	@echo "  clean        - Remove build artifacts"
+	@echo "  test         - Run basic tests"
+	@echo "  version-check- Check version consistency"
+	@echo "  bump-version - Update version number"
+	@echo "  sync-man-version - Update man page version to match VERSION file"
+	@echo "  fix-version  - Fix VERSION file format (remove quotes)"
+	@echo "  help         - Show this help message"
 
-dev:
+version-check:
+	@echo "Checking version consistency..."
+	@if [ -z "$(VERSION)" ]; then \
+		echo "ERROR: VERSION file not found or empty!"; \
+		exit 1; \
+	fi
+	@echo "Current version: $(VERSION)"
+	@if ! echo "$(VERSION)" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' > /dev/null; then \
+		echo "WARNING: Version format should be X.Y.Z (semantic versioning)"; \
+	fi
+	@if [ -f "$(MAN_PAGE)" ]; then \
+		man_version=$$(grep -oE '\\"[0-9]+\.[0-9]+\.[0-9]+\\"' $(MAN_PAGE) | tr -d '"'); \
+		if [ "$$man_version" != "$(VERSION)" ]; then \
+			echo "WARNING: Man page version ($$man_version) differs from VERSION file ($(VERSION))"; \
+			echo "Run 'make sync-man-version' to fix this"; \
+		else \
+			echo "Man page version matches VERSION file: $(VERSION)"; \
+		fi; \
+	else \
+		echo "WARNING: Man page not found at $(MAN_PAGE)"; \
+	fi
+
+dev: version-check
 	@echo "Setting up development environment..."
 	@export TLM_DEV_MODE=1
 	@chmod +x $(MAIN_SCRIPT)
 	@chmod +x $(LIB_SCRIPTS)
 	@echo "Development environment ready!"
+	@echo "Current version: $(VERSION)"
 	@echo "You can now run: TLM_DEV_MODE=1 ./$(MAIN_SCRIPT)"
 
 test: dev
 	@echo "Running basic tests..."
+	@echo "Testing version command..."
 	@TLM_DEV_MODE=1 ./$(MAIN_SCRIPT) --version
+	@echo "Testing help command..."
 	@TLM_DEV_MODE=1 ./$(MAIN_SCRIPT) --help > /dev/null
+	@echo "Testing list command..."
 	@TLM_DEV_MODE=1 ./$(MAIN_SCRIPT) --list
 	@echo "Basic tests passed!"
 
-build: clean
-	@echo "Building debian package..."
+build: clean version-check
+	@echo "Building debian package for version $(VERSION)..."
 	
 	# Create package directory structure
 	@mkdir -p $(DEB_DIR)
 	@mkdir -p $(USR_BIN_DIR)
 	@mkdir -p $(USR_LIB_DIR)
 	@mkdir -p $(MAN_DIR)
+	
+	# Copy VERSION file to package
+	@cp VERSION $(USR_LIB_DIR)/
 	
 	# Copy main executable
 	@cp $(MAIN_SCRIPT) $(USR_BIN_DIR)/
@@ -71,8 +104,12 @@ build: clean
 	
 	# Copy and compress man page if it exists
 	@if [ -f "$(MAN_PAGE)" ]; then \
-		cp $(MAN_PAGE) $(MAN_DIR)/; \
+		echo "Copying man page from $(MAN_PAGE)..."; \
+		sed "s/__VERSION__/$(VERSION)/g" $(MAN_PAGE) > $(MAN_DIR)/$(PACKAGE_NAME).1; \
 		gzip -9 $(MAN_DIR)/$(PACKAGE_NAME).1; \
+		echo "Man page processed and compressed"; \
+	else \
+		echo "Man page not found at $(MAN_PAGE)"; \
 	fi
 	
 	# Generate debian control files
@@ -111,7 +148,7 @@ generate-postinst:
 	@echo "    sudo -u \"\$$SUDO_USER\" mkdir -p \"\$$LAYOUT_DIR\"" >> $(DEB_DIR)/postinst
 	@echo "fi" >> $(DEB_DIR)/postinst
 	@echo "" >> $(DEB_DIR)/postinst
-	@echo "echo \"Tmux Layout Manager installed successfully!\"" >> $(DEB_DIR)/postinst
+	@echo "echo \"Tmux Layout Manager v$(VERSION) installed successfully!\"" >> $(DEB_DIR)/postinst
 	@echo "echo \"Run 'tlm --help' to get started.\"" >> $(DEB_DIR)/postinst
 	@chmod 755 $(DEB_DIR)/postinst
 
@@ -140,10 +177,20 @@ clean:
 
 # Version management
 bump-version:
-	@read -p "Enter new version (current: $(VERSION)): " new_version; \
-	echo "$$new_version" > VERSION; \
-	sed -i 's/TLM_VERSION=".*"/TLM_VERSION="'$$new_version'"/' $(SRC_DIR)/lib/config.sh; \
-	echo "Version updated to $$new_version"
+	@echo "Current version: $(VERSION)"
+	@read -p "Enter new version (format: X.Y.Z): " new_version; \
+	if echo "$new_version" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' > /dev/null; then \
+		echo "$new_version" > VERSION; \
+		if [ -f "$(MAN_PAGE)" ]; then \
+			sed -i "s/\"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"$new_version\"/g" $(MAN_PAGE); \
+			echo "Updated man page version to $new_version"; \
+		fi; \
+		echo "Version updated to $new_version"; \
+		echo "Note: Version is now dynamically loaded from VERSION file"; \
+	else \
+		echo "ERROR: Invalid version format. Use X.Y.Z (e.g., 1.2.3)"; \
+		exit 1; \
+	fi
 
 # Development helpers
 run: dev
@@ -151,3 +198,26 @@ run: dev
 
 debug: dev
 	@TLM_DEBUG=1 TLM_DEV_MODE=1 ./$(MAIN_SCRIPT) $(ARGS)
+
+# Fix version file format
+fix-version:
+	@echo "Fixing VERSION file format..."
+	@if [ -f VERSION ]; then \
+		cat VERSION | tr -d '"' | tr -d "'" | xargs > VERSION.tmp && mv VERSION.tmp VERSION; \
+		echo "VERSION file format fixed: $(cat VERSION)"; \
+	else \
+		echo "VERSION file not found!"; \
+		exit 1; \
+	fi
+
+# Update version in man page to match VERSION file
+sync-man-version:
+	@echo "Syncing man page version with VERSION file..."
+	@if [ -f "VERSION" ] && [ -f "$(MAN_PAGE)" ]; then \
+		current_version=$(cat VERSION | tr -d '"' | tr -d "'" | xargs); \
+		sed -i "s/\"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"$current_version\"/g" $(MAN_PAGE); \
+		echo "Man page version updated to $current_version"; \
+	else \
+		echo "ERROR: VERSION file or man page not found!"; \
+		exit 1; \
+	fi

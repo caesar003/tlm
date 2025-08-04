@@ -1,14 +1,13 @@
 #!/bin/bash
-
 # Completion script for Tmux Layout Manager (tlm)
 
-# _tlm_completion function to generate completions
+# tlm completion function to generate completions
 _tlm_completion() {
 	local cur prev commands layout_word
-	COMPREPLY=()                                                          # Array to hold the completion results
-	cur="${COMP_WORDS[COMP_CWORD]}"                                       # Current word being completed
-	prev="${COMP_WORDS[COMP_CWORD - 1]}"                                  # Previous word
-	commands=("-i" "--init" "-l" "--list" "-v" "--version" "-h" "--help") # Available commands
+	COMPREPLY=()                                                                    # Array to hold the completion results
+	cur="${COMP_WORDS[COMP_CWORD]}"                                                 # Current word being completed
+	prev="${COMP_WORDS[COMP_CWORD - 1]}"                                            # Previous word
+	commands=("-i" "--init" "-l" "--list" "-d" "--detail" "-v" "--version" "-h" "--help") # Available commands
 
 	# Handle the case for the first word (tlm)
 	if [[ ${COMP_CWORD} -eq 1 ]]; then
@@ -18,6 +17,14 @@ _tlm_completion() {
 
 	# Handle -i or --init option for layout names
 	if [[ "$prev" == "-i" || "$prev" == "--init" ]]; then
+		local layouts
+		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json 2>/dev/null | xargs -n 1 basename | sed 's/\.json$//')
+		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
+		return 0
+	fi
+
+	# Handle -d or --detail option for layout names
+	if [[ "$prev" == "-d" || "$prev" == "--detail" ]]; then
 		local layouts
 		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json 2>/dev/null | xargs -n 1 basename | sed 's/\.json$//')
 		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
