@@ -1,10 +1,9 @@
 #!/bin/bash
 
 # Tmux Layout Manager - Configuration and Constants
-# Version: 1.0.4
 
 # Version information
-readonly TLM_VERSION="1.0.4"
+readonly TLM_VERSION="{{VERSION}}"
 
 # Directory and file paths
 readonly CONFIG_DIR="$HOME/.config/tlm"
@@ -30,6 +29,7 @@ readonly HELP_USAGE="Usage: $SCRIPT_NAME [OPTIONS]"
 readonly HELP_OPTIONS="Options:
   -i, --init [layout_name] [session_name]    Load the specified Tmux layout with optional session name.
   -l, --list                                  List available layouts.
+  -d, --detail [layout_name]                  Show detailed information about layouts (all or specific).
   -v, --version                               Show the version number.
   -h, --help                                  Display this help message."
 
@@ -37,6 +37,8 @@ readonly HELP_EXAMPLES="Examples:
   $SCRIPT_NAME -i node                          Load the 'node.json' layout with auto-generated session name.
   $SCRIPT_NAME -i node myproject                Load the 'node.json' layout with session name 'myproject_timestamp'.
   $SCRIPT_NAME -l                               List all available layouts.
+  $SCRIPT_NAME -d                               Show detailed information about all layouts.
+  $SCRIPT_NAME -d node                          Show detailed information about the 'node' layout.
   $SCRIPT_NAME -v                               Show the version number."
 
 readonly HELP_SESSION_NAMING="Session Naming:
