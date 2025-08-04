@@ -65,13 +65,21 @@ build: clean
 	@cp $(MAIN_SCRIPT) $(USR_BIN_DIR)/
 	@chmod 755 $(USR_BIN_DIR)/$(PACKAGE_NAME)
 	
-	# Copy library files
-	@cp $(LIB_SCRIPTS) $(USR_LIB_DIR)/
+	# Copy and replace version in config.sh
+	@mkdir -p $(USR_LIB_DIR)
+	@for script in $(LIB_SCRIPTS); do \
+		if echo "$$script" | grep -q "config.sh"; then \
+			sed 's/{{VERSION}}/$(VERSION)/g' "$$script" > $(USR_LIB_DIR)/$$(basename $$script); \
+		else \
+			cp "$$script" $(USR_LIB_DIR)/; \
+		fi; \
+	done
 	@chmod 644 $(USR_LIB_DIR)/*.sh
 	
 	# Copy and compress man page if it exists
 	@if [ -f "$(MAN_PAGE)" ]; then \
-		cp $(MAN_PAGE) $(MAN_DIR)/; \
+		mkdir -p $(MAN_DIR); \
+		sed 's/{{VERSION}}/$(VERSION)/g' $(MAN_PAGE) > $(MAN_DIR)/$(PACKAGE_NAME).1; \
 		gzip -9 $(MAN_DIR)/$(PACKAGE_NAME).1; \
 	fi
 	
