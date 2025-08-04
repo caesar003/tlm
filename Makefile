@@ -21,7 +21,7 @@ MAN_DIR = $(USR_SHARE_DIR)/man/man1
 # Source files
 MAIN_SCRIPT = $(SRC_DIR)/$(PACKAGE_NAME)
 LIB_SCRIPTS = $(wildcard $(LIB_DIR)/*.sh)
-MAN_PAGE = $(SRC_DIR)/man/$(PACKAGE_NAME).1
+MAN_PAGE = share/man/man1/$(PACKAGE_NAME).1
 
 # Build targets
 .PHONY: all dev build install clean help test
@@ -136,6 +136,7 @@ uninstall:
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(BUILD_DIR)
+	@rm -f *.deb   # Add this line
 	@echo "Clean complete!"
 
 # Version management
