@@ -16,6 +16,9 @@ Load the specified Tmux layout with optional custom session name. If layout_name
 .B \-l, --list
 List available layouts.
 .TP
+.B \-d, --detail [layout_name]
+Show detailed information about layouts. If no layout_name is provided, displays system information and a summary of all available layouts. If a specific layout_name is provided, shows comprehensive details including window configuration, pane splits, and raw JSON structure.
+.TP
 .B \-v, --version
 Show the version number.
 .TP
@@ -45,8 +48,36 @@ Load the layout defined in 'node.json' with session name 'myproject_timestamp'.
 .B ./tlm -l
 List all available layouts.
 .TP
+.B ./tlm -d
+Show detailed information about all layouts and system configuration.
+.TP
+.B ./tlm -d node
+Show detailed information about the 'node' layout, including window structure and configuration.
+.TP
 .B ./tlm -v
 Show the version number.
+
+.SH LAYOUT INSPECTION
+The \fB--detail\fR flag provides comprehensive layout inspection capabilities:
+.TP
+.B System Information
+Displays version, configuration directories, and default layout settings.
+.TP
+.B Layout Summary
+Shows all available layouts with window count and validation status in tabular format.
+.TP
+.B Detailed Layout View
+For specific layouts, shows:
+.RS
+.IP \(bu 2
+Window titles and pane configurations
+.IP \(bu 2
+Split information (single pane vs multiple panes)
+.IP \(bu 2
+Raw JSON configuration for debugging
+.IP \(bu 2
+File validation status
+.RE
 
 .SH CONFIGURATION
 For configuration details, ensure your config file is located at:
@@ -62,6 +93,30 @@ Main configuration file containing DEFAULT_LAYOUT setting.
 .TP
 .B $HOME/.config/tlm/layouts/*.json
 Layout definition files in JSON format.
+.SH LAYOUT FORMAT
+Layout files are JSON arrays containing window objects:
+.PP
+.nf
+.RS
+[
+  {
+    "title": "editor"
+  },
+  {
+    "title": "git + npm",
+    "window_split": 2
+  }
+]
+.RE
+.fi
+.PP
+Each window object supports:
+.TP
+.B title
+(Required) The name of the tmux window
+.TP
+.B window_split
+(Optional) Number of horizontal panes to create in the window
 
 .SH AUTHOR
 Written by caesar003 - https://github.com/caesar003.
