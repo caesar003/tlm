@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Tmux Layout Manager - Configuration and Constants
+# config.sh
 # Version: 1.0.4
 
 # Version information
-readonly TLM_VERSION="1.0.4"
+# readonly TLM_VERSION="__VERSION__"
+readonly TLM_VERSION="{{VERSION}}"
 
 # Directory and file paths
 readonly CONFIG_DIR="$HOME/.config/tlm"
