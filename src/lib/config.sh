@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Tmux Layout Manager - Configuration and Constants
 
 # Version information
@@ -30,21 +29,25 @@ HELP_OPTIONS="Options:
   -i, --init [layout_name] [session_name]    Load the specified Tmux layout with optional session name.
   -l, --list                                  List available layouts.
   -d, --detail [layout_name]                  Show detailed information about layouts (all or specific).
+  -e, --edit [layout_name]                    Edit the specified layout file (or default if none specified).
   -v, --version                               Show the version number.
   -h, --help                                  Display this help message."
-
 HELP_EXAMPLES="Examples:
   $SCRIPT_NAME -i node                          Load the 'node.json' layout with auto-generated session name.
   $SCRIPT_NAME -i node myproject                Load the 'node.json' layout with session name 'myproject_timestamp'.
   $SCRIPT_NAME -l                               List all available layouts.
   $SCRIPT_NAME -d                               Show detailed information about all layouts.
   $SCRIPT_NAME -d node                          Show detailed information about the 'node' layout.
+  $SCRIPT_NAME -e                               Edit the default layout in your configured editor.
+  $SCRIPT_NAME -e node                          Edit the 'node' layout in your configured editor.
   $SCRIPT_NAME -v                               Show the version number."
-
 HELP_SESSION_NAMING="Session Naming:
   - If no session name is provided, the current directory name will be used.
   - For '/home/caesar/projects/wms/OrderService-Frontend', session becomes 'OrderService-Frontend_timestamp'.
   - If a custom session name is provided, it becomes 'custom_name_timestamp'."
-
 HELP_CONFIG_INFO="For configuration details, ensure your config file is located at:
-  $CONFIG_FILE"
+  $CONFIG_FILE
+
+Configuration Options:
+  DEFAULT_LAYOUT=<layout_name>    Set the default layout to load when none is specified.
+  DEFAULT_EDITOR=<editor_command> Set the default editor for editing layout files."

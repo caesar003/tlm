@@ -8,7 +8,7 @@ _tlm_completion() {
 	COMPREPLY=()                                                          # Array to hold the completion results
 	cur="${COMP_WORDS[COMP_CWORD]}"                                       # Current word being completed
 	prev="${COMP_WORDS[COMP_CWORD - 1]}"                                  # Previous word
-	commands=("-i" "--init" "-l" "--list" "-d" "--detail" "-v" "--version" "-h" "--help") # Available commands
+	commands=("-i" "--init" "-l" "--list" "-d" "--detail" "-e" "--edit" "-v" "--version" "-h" "--help") # Available commands
 
 	# Handle the case for the first word (tlm)
 	if [[ ${COMP_CWORD} -eq 1 ]]; then
@@ -26,6 +26,14 @@ _tlm_completion() {
 
 	# Handle -d or --detail option for layout names
 	if [[ "$prev" == "-d" || "$prev" == "--detail" ]]; then
+		local layouts
+		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json 2>/dev/null | xargs -n 1 basename | sed 's/\.json$//')
+		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
+		return 0
+	fi
+
+	# Handle -e or --edit option for layout names
+	if [[ "$prev" == "-e" || "$prev" == "--edit" ]]; then
 		local layouts
 		layouts=$(ls "$HOME/.config/tlm/layouts"/*.json 2>/dev/null | xargs -n 1 basename | sed 's/\.json$//')
 		COMPREPLY=($(compgen -W "$layouts" -- "$cur"))
