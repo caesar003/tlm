@@ -110,6 +110,87 @@ get_default_layout() {
   echo "$default_layout"
 }
 
+# Get default editor from config file
+get_default_editor() {
+  local default_editor=""
+
+  # Try to read from config file if it exists
+  if [[ -f "$CONFIG_FILE" ]]; then
+    default_editor=$(grep -E "^DEFAULT_EDITOR=" "$CONFIG_FILE" | cut -d '=' -f2)
+  fi
+
+  # Fall back to environment variables or vim as default if not configured
+  if [[ -z "$default_editor" ]]; then
+    default_editor="${VISUAL:-${EDITOR:-vim}}"
+  fi
+
+  echo "$default_editor"
+}
+
+# Edit a layout file using the configured editor
+edit_layout() {
+  local layout_name="$1"
+
+  # If no layout name provided, try to use the default layout
+  if [[ -z "$layout_name" ]]; then
+    layout_name=$(get_default_layout)
+    if [[ $? -ne $EXIT_SUCCESS ]]; then
+      echo "Error: No layout specified and no default layout configured." >&2
+      return $EXIT_ERROR
+    fi
+    echo "No layout specified, editing default layout: $layout_name"
+  fi
+
+  local layout_file="$LAYOUT_DIR/$layout_name.json"
+  local editor=$(get_default_editor)
+
+  # Check if the editor command exists
+  if ! command -v "$editor" &>/dev/null; then
+    echo "Error: Editor '$editor' not found in PATH." >&2
+    echo "Please install '$editor' or update DEFAULT_EDITOR in your config file." >&2
+    return $EXIT_ERROR
+  fi
+
+  # Create the layout file if it doesn't exist
+  if [[ ! -f "$layout_file" ]]; then
+    echo "Layout file '$layout_file' does not exist. Creating new layout..."
+
+    # Create directory if it doesn't exist
+    mkdir -p "$LAYOUT_DIR"
+
+    # Create a basic template layout
+    cat >"$layout_file" <<'EOF'
+[
+  {
+    "title": "main",
+    "window_split": 1
+  }
+]
+EOF
+    echo "Created new layout template: $layout_file"
+  fi
+
+  echo "Opening layout '$layout_name' in $editor..."
+
+  # Open the file in the editor
+  "$editor" "$layout_file"
+
+  # Validate the JSON after editing
+  if [[ -f "$layout_file" ]]; then
+    if validate_layout_file "$layout_file"; then
+      echo "Layout file saved and validated successfully."
+      return $EXIT_SUCCESS
+    else
+      echo "Warning: Layout file contains invalid JSON." >&2
+      echo "Please check the syntax and try again." >&2
+      return $EXIT_ERROR
+    fi
+  else
+    echo "Error: Layout file was not saved." >&2
+    return $EXIT_ERROR
+  fi
+}
+
 # Main load function that handles layout name resolution
 load() {
   local layout_name="$1"

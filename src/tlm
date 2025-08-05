@@ -89,6 +89,17 @@ parse_arguments() {
 			show_layout_details "$layout_name"
 			exit $?
 			;;
+		-e | --edit)
+			local layout_name="$2"
+			# Skip if next argument is a flag or empty
+			if [[ "$layout_name" == -* || -z "$layout_name" ]]; then
+				layout_name=""
+			else
+				shift
+			fi
+			edit_layout "$layout_name"
+			exit $?
+			;;
 		-h | --help)
 			show_help
 			exit $EXIT_SUCCESS
