@@ -82,6 +82,12 @@ build: clean
 		sed 's/{{VERSION}}/$(VERSION)/g' $(MAN_PAGE) > $(MAN_DIR)/$(PACKAGE_NAME).1; \
 		gzip -9 $(MAN_DIR)/$(PACKAGE_NAME).1; \
 	fi
+	# Copy bash completion if it exists
+	@if [ -f "share/bash-completion/completions/$(PACKAGE_NAME)" ]; then \
+		mkdir -p $(USR_SHARE_DIR)/bash-completion/completions; \
+		cp share/bash-completion/completions/$(PACKAGE_NAME) $(USR_SHARE_DIR)/bash-completion/completions/; \
+		chmod 644 $(USR_SHARE_DIR)/bash-completion/completions/$(PACKAGE_NAME); \
+	fi
 	
 	# Generate debian control files
 	@$(MAKE) generate-control
