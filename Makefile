@@ -4,6 +4,7 @@
 # Package information
 PACKAGE_NAME = tlm
 VERSION = $(shell cat VERSION 2>/dev/null)
+DATE = $(shell date +"%b %Y")
 ARCHITECTURE = all
 MAINTAINER = caesar003 <caesarmuksid@gmail.com>
 
@@ -79,7 +80,9 @@ build: clean
 	# Copy and compress man page if it exists
 	@if [ -f "$(MAN_PAGE)" ]; then \
 		mkdir -p $(MAN_DIR); \
-		sed 's/{{VERSION}}/$(VERSION)/g' $(MAN_PAGE) > $(MAN_DIR)/$(PACKAGE_NAME).1; \
+		sed -e 's/{{VERSION}}/$(VERSION)/g' \
+		-e 's/{{DATE}}/$(DATE)/g' \
+    $(MAN_PAGE) > $(MAN_DIR)/$(PACKAGE_NAME).1; \
 		gzip -9 $(MAN_DIR)/$(PACKAGE_NAME).1; \
 	fi
 	# Copy bash completion if it exists
